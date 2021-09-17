@@ -123,19 +123,19 @@ VirtualPin VirtualPins::operator[](std::size_t pin_id) noexcept {
     // clang-format on
 }
 
+// Local function to get deque and mutex
+[[nodiscard]] static auto get_deque_mutex(BoardData* bdat, size_t index, bool receive) {
+    auto& chan = bdat->uart_channels[index];
+    if (receive)
+        return std::tie(chan.rx, chan.rx_mut);
+    else
+        return std::tie(chan.tx, chan.tx_mut);
+}
+
 [[nodiscard]] std::size_t VirtualUartBuffer::size() noexcept {
     if (!exists())
         return 0;
-    auto& chan = m_bdat->uart_channels[m_index];
-    auto [d, mut] = [&] {
-        switch (m_dir) {
-        case Direction::rx:
-            return std::tie(chan.rx, chan.rx_mut);
-        case Direction::tx:
-            return std::tie(chan.tx, chan.tx_mut);
-        }
-        unreachable();
-    }();
+    auto [d, mut] = get_deque_mutex(m_bdat, m_index, (m_dir == Direction::rx));
     if (!mut.timed_lock(microsec_clock::universal_time() + boost::posix_time::seconds{1}))
         return 0;
     const auto ret = d.size();
@@ -190,18 +190,9 @@ std::size_t VirtualUartBuffer::write(std::span<const char> buf) noexcept {
 [[nodiscard]] char VirtualUartBuffer::front() noexcept {
     if (!exists())
         return '\0';
-    auto& chan = m_bdat->uart_channels[m_index];
-    auto [d, mut] = [&] {
-        switch (m_dir) {
-        case Direction::rx:
-            return std::tie(chan.rx, chan.rx_mut);
-        case Direction::tx:
-            return std::tie(chan.tx, chan.tx_mut);
-        }
-        unreachable();
-    }();
+    auto [d, mut] = get_deque_mutex(m_bdat, m_index, (m_dir == Direction::rx));
     if (!mut.timed_lock(microsec_clock::universal_time() + boost::posix_time::seconds{1}))
-        return 0;
+        return '\0';
     if (d.empty())
         return '\0';
     const char ret = d.front();
