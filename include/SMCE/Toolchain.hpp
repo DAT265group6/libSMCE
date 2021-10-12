@@ -48,6 +48,7 @@ enum struct toolchain_error {
     sketch_invalid,
     configure_failed,
     build_failed,
+    cmake_outdated,
 
     generic = 255
 };
