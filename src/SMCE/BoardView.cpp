@@ -414,6 +414,7 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
     if (target.size() != frame_buf.data.size() / 3 * 2)
         return false;
+
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
     const auto* source = frame_buf.data.data();
