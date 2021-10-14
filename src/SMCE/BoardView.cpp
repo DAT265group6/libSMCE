@@ -377,7 +377,7 @@ bool FrameBuffer::write_rgb565(std::span<const std::byte> source) {
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (source.size() != frame_buf.data.size() / 2)
+    if (source.size() != frame_buf.data.size() / 3 * 2)
         return false;
 
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
@@ -412,7 +412,7 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
         return false;
 
     auto& frame_buf = m_bdat->frame_buffers[m_idx];
-    if (target.size() != frame_buf.data.size())
+    if (target.size() != frame_buf.data.size() / 3 * 2)
         return false;
     [[maybe_unused]] std::lock_guard lk{frame_buf.data_mut};
 
@@ -423,7 +423,6 @@ bool FrameBuffer::read_rgb565(std::span<std::byte> target) {
 }
 
 void convert_rgb888_to_yuv422([[maybe_unused]] const std::byte* source, [[maybe_unused]] std::span<std::byte> target) {
-    // TODO
     // https://en.wikipedia.org/wiki/YUV#Y%E2%80%B2UV422_to_RGB888_conversion
     // read two pixels at the time
     for (auto i = target.begin(); i != target.end();) {
